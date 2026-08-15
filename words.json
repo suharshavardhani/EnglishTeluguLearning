@@ -1,0 +1,24 @@
+[
+  {
+    "word": "Resilience",
+    "pos": "noun",
+    "teluguMeaning": "స్థైర్యం / ధైర్యం",
+    "teluguEx": "ఆమె స్థైర్యం వైఫల్యం తర్వాత తిరిగి నిలబడటానికి సహాయపడింది.",
+    "tamilMeaning": "மனஉறுதி / மீள்திறன்",
+    "tamilEx": "அவளது மனஉறுதி தோல்விக்குப் பிறகு மீண்டு வர உதவியது.",
+    "englishMeaning": "Ability to recover quickly from difficulties",
+    "englishEx": "Her resilience helped her bounce back after failure.",
+    "exEn": "Her resilience helped her bounce back after failure."
+  },
+  {
+    "word": "Diligent",
+    "pos": "adjective",
+    "teluguMeaning": "శ్రద్ధగల / కష్టపడే",
+    "teluguEx": "అతను ప్రతిదీ రెండుసార్లు సరిచూసుకునే శ్రద్ధగల కార్మికుడు.",
+    "tamilMeaning": "சுறுசுறுப்பான / உழைப்பாளி",
+    "tamilEx": "அவர் எல்லாவற்றையும் இருமுறை சரிபார்க்கும் உழைப்பாளி.",
+    "englishMeaning": "Showing care and effort in work",
+    "englishEx": "He is a diligent worker who double-checks everything.",
+    "exEn": "He is a diligent worker who double-checks everything."
+  }
+]
