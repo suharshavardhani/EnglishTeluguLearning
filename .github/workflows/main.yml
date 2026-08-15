@@ -1,0 +1,41 @@
+name: Generate Vocabulary Dataset
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install google-genai pydantic
+
+      - name: Step 1 - Run fetch_words.py
+        run: |
+          python fetch_words.py
+
+      - name: Step 2 - Run generate_words.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python generate_words.py
+
+      - name: Commit and push words.json
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add words.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated update: words.json generated via Gemini API" && git push)
