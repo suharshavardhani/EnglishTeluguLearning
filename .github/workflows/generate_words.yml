@@ -1,0 +1,9 @@
+- name: Fetch 10k Advanced Words List
+        run: |
+          python fetch_words.py
+
+      - name: Run generation script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python generate_words.py
