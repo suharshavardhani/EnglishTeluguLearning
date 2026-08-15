@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Multilingual Vocab App</title>
+  
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="data:application/json,{%22name%22:%22Vocab%20App%22,%22short_name%22:%22Vocab%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f3f4f6%22,%22theme_color%22:%22%234f46e5%22}" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #f3f4f6; color: #1f2937; display: flex; flex-direction: column; height: 100vh; overflow: hidden; justify-content: space-between; padding: 16px; }
+    
+    header { text-align: center; padding: 10px 0; }
+    header h1 { font-size: 1.4rem; color: #4f46e5; }
+    
+    /* Language Selector Controls */
+    .lang-container { margin: 8px 0; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .lang-label { font-size: 0.85rem; color: #4b5563; font-weight: 600; }
+    .lang-select { padding: 6px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #ffffff; font-weight: 600; font-size: 0.85rem; color: #1f2937; outline: none; cursor: pointer; }
+
+    .progress-bar { width: 100%; background: #e5e7eb; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 10px; }
+    .progress-fill { height: 100%; background: #4f46e5; width: 0%; transition: width 0.3s ease; }
+
+    /* Flashcard UI */
+    .deck-container { flex: 1; display: flex; align-items: center; justify-content: center; relative; margin: 15px 0; }
+    .card { width: 100%; max-width: 360px; height: 420px; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; text-align: center; }
+    
+    .word-title { font-size: 2rem; font-weight: 700; color: #111827; }
+    .pos { font-size: 0.85rem; color: #6b7280; font-style: italic; margin-top: 2px; }
+    .support-meaning { font-size: 1.4rem; font-weight: 600; color: #059669; margin: 12px 0; min-height: 40px; }
+    
+    .example-box { background: #f9fafb; border-left: 4px solid #4f46e5; padding: 12px; border-radius: 6px; text-align: left; }
+    .example-en { font-size: 0.9rem; color: #374151; margin-bottom: 6px; }
+    .example-support { font-size: 0.85rem; color: #4b5563; }
+
+    .audio-btn { background: #eef2ff; border: none; color: #4f46e5; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; margin-top: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: fit-content; align-self: center; }
+
+    .controls { display: flex; gap: 12px; justify-content: center; padding-bottom: 10px; }
+    .btn { padding: 14px 24px; border-radius: 12px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; flex: 1; max-width: 170px; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-primary { background: #4f46e5; color: white; }
+
+    /* Quiz Container */
+    .quiz-container { display: none; flex: 1; flex-direction: column; justify-content: center; max-width: 400px; margin: 0 auto; width: 100%; }
+    .quiz-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; text-align: center; color: #111827; }
+    .options-grid { display: flex; flex-direction: column; gap: 10px; }
+    .option-btn { background: white; border: 2px solid #e5e7eb; padding: 14px; border-radius: 12px; font-size: 1rem; text-align: left; cursor: pointer; }
+    .option-btn.correct { background: #d1fae5; border-color: #10b981; color: #065f46; }
+    .option-btn.wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+
+    .results-container { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .score-badge { font-size: 3rem; font-weight: 800; color: #4f46e5; margin: 16px 0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="header-title">English Vocabulary</h1>
+    
+    <!-- Language Selection Dropdown -->
+    <div class="lang-container">
+      <span class="lang-label">Support Language:</span>
+      <select id="lang-select" class="lang-select" onchange="changeLanguage()">
+        <option value="telugu" selected>Telugu (తెలుగు)</option>
+        <option value="tamil">Tamil (தமிழ்)</option>
+        <option value="english">English (Simple)</option>
+      </select>
+    </div>
+
+    <p id="header-subtitle" style="font-size: 0.85rem; color: #6b7280;">Card 1 of 5</p>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  </header>
+
+  <!-- CARD VIEW -->
+  <div class="deck-container" id="deck-section">
+    <div class="card" id="active-card">
+      <div>
+        <div class="word-title" id="card-word">Resilience</div>
+        <div class="pos" id="card-pos">noun</div>
+        <button class="audio-btn" onclick="speakWord()">🔊 Listen</button>
+      </div>
+
+      <div class="support-meaning" id="card-meaning">స్థైర్యం / ధైర్యం</div>
+
+      <div class="example-box">
+        <div class="example-en" id="card-ex-en">"Her resilience helped her bounce back after failure."</div>
+        <div class="example-support" id="card-ex-support">"ఆమె స్థైర్యం వైఫల్యం తర్వాత తిరిగి నిలబడటానికి సహాయపడింది."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls" id="deck-controls">
+    <button class="btn btn-secondary" onclick="prevCard()">Previous</button>
+    <button class="btn btn-primary" onclick="nextCard()">Next Card</button>
+  </div>
+
+  <!-- QUIZ VIEW -->
+  <div class="quiz-container" id="quiz-section">
+    <div class="quiz-question" id="quiz-q">What is the meaning?</div>
+    <div class="options-grid" id="quiz-options"></div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div class="results-container" id="results-section">
+    <h2>Quiz Completed! 🎉</h2>
+    <div class="score-badge" id="score-text">4 / 5</div>
+    <button class="btn btn-primary" style="max-width: 200px;" onclick="restartApp()">Restart Lesson</button>
+  </div>
+
+  <script>
+    let vocabData = [];
+    let currentIndex = 0;
+    let quizIndex = 0;
+    let score = 0;
+    let currentLang = 'telugu';
+
+    // Async loader for words.json
+    async function loadVocabData() {
+      try {
+        const response = await fetch('./words.json');
+        vocabData = await response.json();
+        renderCard();
+      } catch (e) {
+        console.error("Could not fetch words.json", e);
+      }
+    }
+
+    function changeLanguage() {
+      currentLang = document.getElementById('lang-select').value;
+      renderCard();
+    }
+
+    function renderCard() {
+      if (!vocabData.length) return;
+      const item = vocabData[currentIndex];
+
+      document.getElementById('card-word').textContent = item.word;
+      document.getElementById('card-pos').textContent = item.pos;
+      document.getElementById('card-ex-en').textContent = `"${item.exEn}"`;
+
+      // Select translation dynamic keys based on chosen language
+      if (currentLang === 'telugu') {
+        document.getElementById('card-meaning').textContent = item.teluguMeaning || item.meaning;
+        document.getElementById('card-ex-support').textContent = item.teluguEx || item.exTe;
+      } else if (currentLang === 'tamil') {
+        document.getElementById('card-meaning').textContent = item.tamilMeaning || item.meaning;
+        document.getElementById('card-ex-support').textContent = item.tamilEx || item.exTe;
+      } else {
+        document.getElementById('card-meaning').textContent = item.englishMeaning || item.word;
+        document.getElementById('card-ex-support').textContent = item.englishEx || item.exEn;
+      }
+
+      document.getElementById('header-subtitle').textContent = `Card ${currentIndex + 1} of ${vocabData.length}`;
+      document.getElementById('progress').style.width = `${((currentIndex + 1) / vocabData.length) * 100}%`;
+    }
+
+    function nextCard() {
+      if (currentIndex < vocabData.length - 1) {
+        currentIndex++;
+        renderCard();
+      } else {
+        startQuiz();
+      }
+    }
+
+    function prevCard() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCard();
+      }
+    }
+
+    function speakWord() {
+      const utterance = new SpeechSynthesisUtterance(vocabData[currentIndex].word);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function startQuiz() {
+      document.getElementById('deck-section').style.display = 'none';
+      document.getElementById('deck-controls').style.display = 'none';
+      document.getElementById('quiz-section').style.display = 'flex';
+      quizIndex = 0;
+      score = 0;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const item = vocabData[quizIndex];
+      const correctMeaning = currentLang === 'telugu' ? (item.teluguMeaning || item.meaning) :
+                             currentLang === 'tamil' ? (item.tamilMeaning || item.meaning) :
+                             (item.englishMeaning || item.word);
+
+      document.getElementById('quiz-q').textContent = `What is the meaning of "${item.word}"?`;
+      document.getElementById('header-subtitle').textContent = `Question ${quizIndex + 1} of ${vocabData.length}`;
+
+      // Distractors
+      const distractors = vocabData
+        .filter(v => v.word !== item.word)
+        .map(v => currentLang === 'telugu' ? (v.teluguMeaning || v.meaning) :
+                  currentLang === 'tamil' ? (v.tamilMeaning || v.meaning) :
+                  (v.englishMeaning || v.word))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+
+      const options = [...distractors, correctMeaning].sort(() => 0.5 - Math.random());
+      const optionsGrid = document.getElementById('quiz-options');
+      optionsGrid.innerHTML = '';
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (opt === correctMeaning) { btn.classList.add('correct'); score++; }
+          else btn.classList.add('wrong');
+          setTimeout(() => {
+            quizIndex++;
+            if (quizIndex < vocabData.length) renderQuizQuestion();
+            else showResults();
+          }, 800);
+        };
+        optionsGrid.appendChild(btn);
+      });
+    }
+
+    function showResults() {
+      document.getElementById('quiz-section').style.display = 'none';
+      document.getElementById('results-section').style.display = 'flex';
+      document.getElementById('score-text').textContent = `${score} / ${vocabData.length}`;
+    }
+
+    function restartApp() {
+      currentIndex = 0;
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById('deck-section').style.display = 'flex';
+      document.getElementById('deck-controls').style.display = 'flex';
+      renderCard();
+    }
+
+    loadVocabData();
+  </script>
+</body>
+</html>
