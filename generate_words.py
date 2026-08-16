@@ -33,13 +33,17 @@ def load_english_words(file_path="english_words.txt") -> List[str]:
 
 def process_batch(word_batch: List[str]) -> List[dict]:
     prompt = f"""
-Provide Telugu meanings and example sentences for the following English vocabulary words:
-{', '.join(word_batch)}
+Analyze the following English words: {', '.join(word_batch)}
 
-Rules:
-- 'meaning': Clear Telugu definition/translation.
-- 'example': Advanced, natural English sentence showing proper context.
-- 'telugu_example': Accurate Telugu translation of the English example sentence.
+1. Skip basic or everyday words (A1, A2, B1, B2 level like 'about', 'employee', 'showing').
+2. ONLY generate entries for ADVANCED, GRE-LEVEL, or C1/C2 words.
+3. If a word is basic, omit it entirely from the JSON response.
+
+For eligible advanced words, return:
+- 'word': The English word
+- 'meaning': Clear Telugu definition/translation
+- 'example': Advanced, context-rich English example sentence
+- 'telugu_example': Accurate Telugu translation of the example sentence
 """
     response = client.models.generate_content(
         model="gemini-3.5-flash",
