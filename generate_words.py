@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import sys
 from typing import List
 from pydantic import BaseModel, Field
 from google import genai
@@ -35,7 +36,7 @@ Rules:
 - 'telugu_example': Accurate Telugu translation of the English example sentence.
 """
     response = client.models.generate_content(
-        model="gemini-3.5-flash",
+        model="gemini-2.5-flash-lite", # Or gemini-2.5-flash
         contents=prompt,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -49,10 +50,9 @@ Rules:
 def main():
     input_file = "english_words.txt"
     output_file = "words.json"
-    batch_size = 50
-    delay_between_calls = 6.0  # Increased to stay safely under RPM limits
+    batch_size = 100  # Process 100 words per call
+    delay_between_calls = 0.5  # Minimal pause with pay-as-you-go billing
 
-    # Ensure output_file exists so Git doesn't fail if process stops
     if not os.path.exists(output_file):
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump([], f)
@@ -74,7 +74,11 @@ def main():
 
     remaining_words = [w for w in words if w.lower() not in processed_words]
     total_remaining = len(remaining_words)
-    print(f"Total words left to process: {total_remaining}")
+    print(f"Total words remaining: {total_remaining}")
+
+    if total_remaining == 0:
+        print("All words have already been generated!")
+        return
 
     for i in range(0, total_remaining, batch_size):
         batch = remaining_words[i:i + batch_size]
@@ -90,14 +94,12 @@ def main():
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
-            print(f"Saved {len(existing_data)} entries to {output_file}.")
+            print(f"Saved {len(existing_data)} total entries to {output_file}.")
             time.sleep(delay_between_calls)
 
         except Exception as e:
-            print(f"Rate limit or error encountered: {e}")
-            print("Waiting 60 seconds for API quota reset...")
-            time.sleep(60)  # Wait 60s to fulfill the 30-45s Google wait requirement
-            continue
+            print(f"Error encountered: {e}")
+            time.sleep(5)
 
 if __name__ == "__main__":
     main()
